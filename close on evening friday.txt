@@ -1,0 +1,56 @@
+Adding option to close all positions on Friday evening
+How to close all the open positions on Friday evening
+Why to bother?
+
+Some brokers are charging commissions when we leave opened positions over the weekend
+
+There may be some events happening over the weekend that would let prices to slide too much...
+
+We may want to consolidate our results, make maintenance of our trading robots etc
+
+What will the trading robot do?
+
+Bot will perform the following:
+
+Add option to close positions on Friday after 23:00
+
+Avoid opening new positions
+
+Implementation
+
+1. Add external variable as an option:
+
+extern bool    closeAllOnFridays                = True; //close all orders on Friday 1hr before market closure
+
+2. Define internal variable
+
+bool isFridayActive = false;
+
+3. Create the 'exit' logic that will be executed inside start() function:
+
+  //Exit variables:
+   if(closeAllOnFridays)
+     {
+      //check if it's Friday and 1 hr before market closure
+      if(Hour()== 23 && DayOfWeek()== 5)
+        {
+         isFridayActive = true;
+        } else
+            {
+             isFridayActive = false;
+            }
+        
+     }
+4. Add new conditions to close opened positions (see new condition ... || isFridayActive == true)
+
+     if(CountPosOrders(MagicNumber,OP_BUY)>=1 && ((ExitSignal(CrossTriggered0)==2 && ExitSignal(CrossTriggered1)==1 && close_orders) || isFridayActive == true))
+        { // Close Long Positions
+         CloseOrderPosition(OP_BUY, OnJournaling, MagicNumber, Slippage, P, RetryInterval); 
+        }
+      if(CountPosOrders(MagicNumber,OP_SELL)>=1 && ((ExitSignal(CrossTriggered0)==1 && ExitSignal(CrossTriggered1)==2 && close_orders) || isFridayActive == true))
+        { // Close Short Positions
+         CloseOrderPosition(OP_SELL, OnJournaling, MagicNumber, Slippage, P, RetryInterval);
+        }
+5. Add new conditions to avoid opening new positions (see new condition !isFirdayActive)
+
+            if(!Base && !isFridayActive && TradeAllowed && isMarketTypePolicyON && ...
